@@ -902,8 +902,9 @@ var _ = Describe("StatefulSet", func() {
 						{Name: "persistence", MountPath: "/var/lib/rabbitmq/mnesia/"},
 						{Name: "rabbitmq-erlang-cookie", MountPath: "/var/lib/rabbitmq/"},
 						{Name: "pod-info", MountPath: "/etc/pod-info/"},
-						{Name: "rabbitmq-confd", MountPath: "/etc/rabbitmq/conf.d/default_user.conf", SubPath: "default_user.conf"},
-						{Name: "server-conf", MountPath: "/etc/rabbitmq/rabbitmq.conf", SubPath: "rabbitmq.conf"},
+						{Name: "rabbitmq-confd", MountPath: "/etc/rabbitmq/conf.d/10-operatorDefaults.conf", SubPath: "10-operatorDefaults.conf"},
+						{Name: "rabbitmq-confd", MountPath: "/etc/rabbitmq/conf.d/11-default_user.conf", SubPath: "11-default_user.conf"},
+						{Name: "rabbitmq-confd", MountPath: "/etc/rabbitmq/conf.d/90-additionalConfig.conf", SubPath: "90-additionalConfig.conf"},
 						{Name: "rabbitmq-plugins", MountPath: "/operator"},
 					}
 
@@ -941,16 +942,6 @@ var _ = Describe("StatefulSet", func() {
 
 			Expect(statefulSet.Spec.Template.Spec.Volumes).To(ConsistOf(
 				corev1.Volume{
-					Name: "server-conf",
-					VolumeSource: corev1.VolumeSource{
-						ConfigMap: &corev1.ConfigMapVolumeSource{
-							LocalObjectReference: corev1.LocalObjectReference{
-								Name: instance.ChildResourceName("server-conf"),
-							},
-						},
-					},
-				},
-				corev1.Volume{
 					Name: "plugins-conf",
 					VolumeSource: corev1.VolumeSource{
 						ConfigMap: &corev1.ConfigMapVolumeSource{
@@ -966,6 +957,23 @@ var _ = Describe("StatefulSet", func() {
 						Projected: &corev1.ProjectedVolumeSource{
 							Sources: []corev1.VolumeProjection{
 								{
+									ConfigMap: &corev1.ConfigMapProjection{
+										LocalObjectReference: corev1.LocalObjectReference{
+											Name: builder.Instance.ChildResourceName("server-conf"),
+										},
+										Items: []corev1.KeyToPath{
+											{
+												Key:  "operatorDefaults.conf",
+												Path: "10-operatorDefaults.conf",
+											},
+											{
+												Key:  "additionalConfig.conf",
+												Path: "90-operatorDefaults.conf",
+											},
+										},
+									},
+								},
+								{
 									Secret: &corev1.SecretProjection{
 										LocalObjectReference: corev1.LocalObjectReference{
 											Name: builder.Instance.ChildResourceName("default-user"),
@@ -973,7 +981,7 @@ var _ = Describe("StatefulSet", func() {
 										Items: []corev1.KeyToPath{
 											{
 												Key:  "default_user.conf",
-												Path: "default_user.conf",
+												Path: "11-default_user.conf",
 											},
 										},
 									},
@@ -1561,8 +1569,9 @@ var _ = Describe("StatefulSet", func() {
 							{Name: "persistence", MountPath: "/var/lib/rabbitmq/mnesia/"},
 							{Name: "rabbitmq-erlang-cookie", MountPath: "/var/lib/rabbitmq/"},
 							{Name: "pod-info", MountPath: "/etc/pod-info/"},
-							{Name: "rabbitmq-confd", MountPath: "/etc/rabbitmq/conf.d/default_user.conf", SubPath: "default_user.conf"},
-							{Name: "server-conf", MountPath: "/etc/rabbitmq/rabbitmq.conf", SubPath: "rabbitmq.conf"},
+							{Name: "rabbitmq-confd", MountPath: "/etc/rabbitmq/conf.d/10-operatorDefaults.conf", SubPath: "10-operatorDefaults.conf"},
+							{Name: "rabbitmq-confd", MountPath: "/etc/rabbitmq/conf.d/11-default_user.conf", SubPath: "11-default_user.conf"},
+							{Name: "rabbitmq-confd", MountPath: "/etc/rabbitmq/conf.d/90-additionalConfig.conf", SubPath: "90-additionalConfig.conf"},
 							{Name: "rabbitmq-plugins", MountPath: "/operator"},
 							{Name: "test", MountPath: "test"},
 						}

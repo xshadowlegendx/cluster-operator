@@ -79,6 +79,7 @@ func (builder *ServerConfigMapBuilder) Update(object runtime.Object) error {
 	configMap := object.(*corev1.ConfigMap)
 
 	ini.PrettySection = false // Remove trailing new line because rabbitmq.conf has only a default section.
+	// TODO: load-empty config
 	cfg, err := ini.Load([]byte(defaultRabbitmqConf))
 	if err != nil {
 		return err
