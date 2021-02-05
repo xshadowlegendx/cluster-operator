@@ -1,0 +1,6 @@
+apiVersion: kbld.k14s.io/v1alpha1
+kind: Config
+overrides:
+- image: rabbitmqoperator/cluster-operator:1.4.0
+  newImage: index.docker.io/rabbitmqoperator/cluster-operator@sha256:7e946bf77fde1b9b566639d65c161397071f0ef8ec46cf57a56cf4720825a8f4
+  preresolved: true

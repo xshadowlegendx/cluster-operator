@@ -1,0 +1,9 @@
+apiVersion: imgpkg.carvel.dev/v1alpha1
+kind: Bundle
+metadata:
+  name: basic
+authors:
+- name: rabbitmq-for-k8s
+  email: rabbitmq-for-k8s@groups.vmware.com
+websites:
+- url: rabbitmq.com/kubernetes/operator/operator-overview.html
