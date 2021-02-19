@@ -339,6 +339,44 @@ CONSOLE_LOG=new`
 		})
 	})
 
+	XContext("Scale Down", func() {
+		When("RabbitmqCluster is scaled down from 5 nodes to 3 node", func() {
+			var cluster *rabbitmqv1beta1.RabbitmqCluster
+
+			BeforeEach(func() {
+				cluster = newRabbitmqCluster(namespace, "scale-down-rabbit")
+				cluster.Spec.Replicas = pointer.Int32Ptr(5)
+
+				Expect(createRabbitmqCluster(ctx, rmqClusterClient, cluster)).To(Succeed())
+				waitForRabbitmqRunning(cluster)
+			})
+
+			AfterEach(func() {
+				Expect(rmqClusterClient.Delete(context.TODO(), cluster)).To(Succeed())
+			})
+
+			It("pods are terminated one by one", func() {
+				// Update RabbitmqCluster with TLS secret name
+				Expect(updateRabbitmqCluster(ctx, rmqClusterClient, cluster.Name, cluster.Namespace, func(cluster *rabbitmqv1beta1.RabbitmqCluster) {
+					cluster.Spec.Replicas = pointer.Int32Ptr(3)
+				})).To(Succeed())
+
+				// need to verify pod 4 is terminated but pod 3 is running
+
+				// cluster still functions after shrinking
+				username, password, err := getUsernameAndPassword(ctx, clientSet, cluster.Namespace, cluster.Name)
+				hostname := kubernetesNodeIp(ctx, clientSet)
+				port := rabbitmqNodePort(ctx, clientSet, cluster, "management")
+				Expect(err).NotTo(HaveOccurred())
+				assertHttpReady(hostname, port)
+
+				response, err := alivenessTest(hostname, port, username, password)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(response.Status).To(Equal("ok"))
+			})
+		})
+	})
+
 	Context("Clustering", func() {
 		When("RabbitmqCluster is deployed with 3 nodes", func() {
 			var cluster *rabbitmqv1beta1.RabbitmqCluster

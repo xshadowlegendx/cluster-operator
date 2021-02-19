@@ -67,7 +67,7 @@ type RabbitmqClusterReconciler struct {
 
 // the rbac rule requires an empty row at the end to render
 // +kubebuilder:rbac:groups="",resources=pods/exec,verbs=create
-// +kubebuilder:rbac:groups="",resources=pods,verbs=update;get;list;watch
+// +kubebuilder:rbac:groups="",resources=pods,verbs=update;get;list;watch;delete
 // +kubebuilder:rbac:groups="",resources=services,verbs=get;list;watch;create;update
 // +kubebuilder:rbac:groups="",resources=endpoints,verbs=get;watch;list
 // +kubebuilder:rbac:groups=apps,resources=statefulsets,verbs=get;list;watch;create;update;delete
@@ -165,6 +165,13 @@ func (r *RabbitmqClusterReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		if builder.UpdateMayRequireStsRecreate() {
 			if err = r.reconcilePVC(ctx, builder, rabbitmqCluster, resource); err != nil {
 				rabbitmqCluster.Status.SetCondition(status.ReconcileSuccess, corev1.ConditionFalse, "FailedReconcilePVC", err.Error())
+				if statusErr := r.Status().Update(ctx, rabbitmqCluster); statusErr != nil {
+					logger.Error(statusErr, "Failed to update ReconcileSuccess condition state")
+				}
+				return ctrl.Result{}, err
+			}
+			if err = r.reconcileScaleDown(ctx, builder, rabbitmqCluster, resource); err != nil {
+				rabbitmqCluster.Status.SetCondition(status.ReconcileSuccess, corev1.ConditionFalse, "FailedScaleDown", err.Error())
 				if statusErr := r.Status().Update(ctx, rabbitmqCluster); statusErr != nil {
 					logger.Error(statusErr, "Failed to update ReconcileSuccess condition state")
 				}

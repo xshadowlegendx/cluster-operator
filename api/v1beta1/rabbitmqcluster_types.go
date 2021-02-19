@@ -9,6 +9,7 @@
 package v1beta1
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -84,6 +85,11 @@ type RabbitmqClusterSpec struct {
 	// +kubebuilder:validation:Minimum:=0
 	// +kubebuilder:default:=604800
 	TerminationGracePeriodSeconds *int64 `json:"terminationGracePeriodSeconds,omitempty"`
+	// Set to true to allow scale down of the RabbitmqCluster.
+	// It defaults to false to prevent cluster scale down.
+	// Scale down is a dangerous operation. Do it at your own risk!
+	// +kubebuilder:default:=false
+	AllowScaleDown bool `json:"allowScaleDown,omitempty"`
 }
 
 // Provides the ability to override the generated manifest of several child resources.
@@ -369,6 +375,15 @@ func (cluster RabbitmqCluster) ChildResourceName(name string) string {
 
 func (cluster RabbitmqCluster) PVCName(i int) string {
 	return strings.Join([]string{"persistence", cluster.Name, "server", strconv.Itoa(i)}, "-")
+}
+
+func (cluster RabbitmqCluster) PodName(i int32) string {
+	return strings.Join([]string{cluster.Name, "server", strconv.Itoa(int(i))}, "-")
+}
+
+// default NodeName is rabbit@$(MY_POD_NAME).$(K8S_SERVICE_NAME).$(MY_POD_NAMESPACE)
+func (cluster RabbitmqCluster) NodeName(i int32) string {
+	return fmt.Sprintf("rabbit@%s.%s.%s", cluster.PodName(i), cluster.ChildResourceName(""), cluster.Namespace)
 }
 
 func init() {

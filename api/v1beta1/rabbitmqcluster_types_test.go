@@ -187,6 +187,7 @@ var _ = Describe("RabbitmqCluster", func() {
 							Image:                         "rabbitmq-image-from-cr",
 							ImagePullSecrets:              []corev1.LocalObjectReference{{Name: "my-super-secret"}},
 							TerminationGracePeriodSeconds: pointer.Int64Ptr(0),
+							AllowScaleDown:                false,
 							Service: RabbitmqClusterServiceSpec{
 								Type: "NodePort",
 								Annotations: map[string]string{
@@ -456,10 +457,25 @@ var _ = Describe("RabbitmqCluster", func() {
 			Expect(updatedCondition.LastTransitionTime.Before(&notExpectedTime)).To(BeFalse())
 		})
 	})
+
 	Context("PVC Name helper function", func() {
 		It("returns the correct PVC name", func() {
 			r := generateRabbitmqClusterObject("testrabbit")
 			Expect(r.PVCName(0)).To(Equal("persistence-testrabbit-server-0"))
+		})
+	})
+
+	Context("PodName helper function", func() {
+		It("returns the correct pod name", func() {
+			r := generateRabbitmqClusterObject("testpodnamerabbit")
+			Expect(r.PodName(3)).To(Equal("testpodnamerabbit-server-3"))
+		})
+	})
+
+	Context("NodeName helper function", func() {
+		It("returns the correct node name", func() {
+			r := generateRabbitmqClusterObject("testnodenamerabbit")
+			Expect(r.NodeName(5)).To(Equal("rabbit@testnodenamerabbit-server-5.testnodenamerabbit.default"))
 		})
 	})
 })

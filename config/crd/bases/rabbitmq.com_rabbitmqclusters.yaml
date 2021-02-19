@@ -388,6 +388,10 @@ spec:
                           type: array
                       type: object
                   type: object
+                allowScaleDown:
+                  default: false
+                  description: Set to true to allow scale down of the RabbitmqCluster. It defaults to false to prevent cluster scale down. Scale down is a dangerous operation. Do it at your own risk!
+                  type: boolean
                 image:
                   default: rabbitmq:3.8.12-management
                   description: Image is the name of the RabbitMQ docker image to use for RabbitMQ nodes in the RabbitmqCluster. Must be provided together with ImagePullSecrets in order to use an image in a private registry.
@@ -3499,7 +3503,7 @@ spec:
                     additionalPlugins:
                       description: 'List of plugins to enable in addition to essential plugins: rabbitmq_management, rabbitmq_prometheus, and rabbitmq_peer_discovery_k8s.'
                       items:
-                        description: kubebuilder validating tags 'Pattern' and 'MaxLength' must be specified on string type. Alias type 'string' as 'Plugin' to specify schema validation on items of the list 'AdditionalPlugins'
+                        description: A Plugin to enable on the RabbitmqCluster.
                         maxLength: 100
                         pattern: ^\w+$
                         type: string

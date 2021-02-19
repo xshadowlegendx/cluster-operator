@@ -695,7 +695,7 @@ var _ = Describe("RabbitmqClusterController", func() {
 					Namespace: defaultNamespace,
 				},
 				Spec: rabbitmqv1beta1.RabbitmqClusterSpec{
-					Replicas: pointer.Int32Ptr(10),
+					Replicas: pointer.Int32Ptr(1),
 					Override: rabbitmqv1beta1.RabbitmqClusterOverrideSpec{
 						StatefulSet: &rabbitmqv1beta1.StatefulSet{
 							Spec: &rabbitmqv1beta1.StatefulSetSpec{
