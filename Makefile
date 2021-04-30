@@ -95,11 +95,10 @@ generate-installation-manifest:
 	kustomize build config/installation/ > releases/rabbitmq-cluster-operator.yaml
 
 BUNDLE_VERSION ?= latest
-generate-imgpkg: check-env-docker-credentials check-env-docker-bundle ## Create OCI bundle. The default version is latest. To set a version, use the BUNDLE_VERSION variable. Example - make bundle BUNDLE_VERSION=v0.0.1.
-	mkdir -p bundle/.imgpkg
-	kustomize build config/installation/ > bundle/rabbitmq-cluster-operator.yaml
-	kbld --imgpkg-lock-output bundle/.imgpkg/images.yml -f bundle
-	imgpkg push -b $(DOCKER_REGISTRY_SERVER)/$(OPERATOR_BUNDLE):$(BUNDLE_VERSION) -f bundle
+generate-imgpkg: check-env-docker-credentials check-env-docker-bundle generate-installation-manifest ## Create OCI bundle. The default version is latest. To set a version, use the BUNDLE_VERSION variable. Example - make bundle BUNDLE_VERSION=v0.0.1.
+	mkdir -p releases/.imgpkg
+	kbld --imgpkg-lock-output releases/.imgpkg/images.yml -f releases
+	imgpkg push -b $(DOCKER_REGISTRY_SERVER)/$(OPERATOR_BUNDLE):$(BUNDLE_VERSION) -f releases
 
 # Build the docker image
 docker-build: check-env-docker-repo git-commit-sha
