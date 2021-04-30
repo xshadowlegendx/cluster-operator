@@ -94,6 +94,13 @@ generate-installation-manifest:
 	mkdir -p releases
 	kustomize build config/installation/ > releases/rabbitmq-cluster-operator.yaml
 
+BUNDLE_VERSION ?= latest
+generate-imgpkg: check-env-docker-credentials check-env-docker-bundle ## Create OCI bundle. The default version is latest. To set a version, use the BUNDLE_VERSION variable. Example - make bundle BUNDLE_VERSION=v0.0.1.
+	mkdir -p bundle/.imgpkg
+	kustomize build config/installation/ > bundle/rabbitmq-cluster-operator.yaml
+	kbld --imgpkg-lock-output bundle/.imgpkg/images.yml -f bundle
+	imgpkg push -b $(DOCKER_REGISTRY_SERVER)/$(OPERATOR_BUNDLE):$(BUNDLE_VERSION) -f bundle
+
 # Build the docker image
 docker-build: check-env-docker-repo git-commit-sha
 	docker build --build-arg=GIT_COMMIT=$(GIT_COMMIT) -t $(DOCKER_REGISTRY_SERVER)/$(OPERATOR_IMAGE):latest .
@@ -175,6 +182,11 @@ endif
 check-env-docker-repo: check-env-registry-server
 ifndef OPERATOR_IMAGE
 	$(error OPERATOR_IMAGE is undefined: path to the Operator image within the registry specified in DOCKER_REGISTRY_SERVER (e.g. rabbitmq/cluster-operator - without leading slash))
+endif
+
+check-env-docker-bundle: check-env-registry-server
+ifndef OPERATOR_BUNDLE
+	$(error OPERATOR_BUNDLE is undefined: path to the Operator OCI bundle within the registry specified in DOCKER_REGISTRY_SERVER (e.g. rabbitmq/cluster-operator-bundle - without leading slash))
 endif
 
 check-env-docker-credentials: check-env-registry-server
