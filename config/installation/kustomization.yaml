@@ -19,3 +19,11 @@ resources:
 - ../crd/
 - ../rbac/
 - ../manager/
+
+patchesJson6902:
+  - path: image_patch.json
+    target:
+      group: apiextensions.k8s.io
+      version: v1
+      kind: CustomResourceDefinition
+      name: rabbitmqclusters.rabbitmq.com
