@@ -21,6 +21,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	defaultscheme "k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/utils/pointer"
 )
 
 var _ = Context("Services", func() {
@@ -444,45 +445,49 @@ var _ = Context("Services", func() {
 				Expect(err).NotTo(HaveOccurred())
 
 				amqpPort := corev1.ServicePort{
-					Name:       "amqp",
-					Port:       5672,
-					TargetPort: intstr.FromInt(5672),
-					Protocol:   corev1.ProtocolTCP,
+					Name:        "amqp",
+					Port:        5672,
+					TargetPort:  intstr.FromInt(5672),
+					Protocol:    corev1.ProtocolTCP,
+					AppProtocol: pointer.String("amqp"),
 				}
 				managementPort := corev1.ServicePort{
-					Name:       "management",
-					Port:       15672,
-					TargetPort: intstr.FromInt(15672),
-					Protocol:   corev1.ProtocolTCP,
+					Name:        "management",
+					Port:        15672,
+					TargetPort:  intstr.FromInt(15672),
+					Protocol:    corev1.ProtocolTCP,
+					AppProtocol: pointer.String("http"),
 				}
 				prometheusPort := corev1.ServicePort{
-					Name:       "prometheus",
-					Port:       15692,
-					TargetPort: intstr.FromInt(15692),
-					Protocol:   corev1.ProtocolTCP,
+					Name:        "prometheus",
+					Port:        15692,
+					TargetPort:  intstr.FromInt(15692),
+					Protocol:    corev1.ProtocolTCP,
+					AppProtocol: pointer.String("prometheus.io/metrics"),
 				}
 				Expect(svc.Spec.Ports).To(ConsistOf(amqpPort, managementPort, prometheusPort))
 			})
 
 			DescribeTable("plugins exposing ports",
-				func(plugin, servicePortName string, port int) {
+				func(plugin, servicePortName string, port int, appProtocol *string) {
 					instance.Spec.Rabbitmq.AdditionalPlugins = []rabbitmqv1beta1.Plugin{rabbitmqv1beta1.Plugin(plugin)}
 					Expect(serviceBuilder.Update(svc)).To(Succeed())
 
 					expectedPort := corev1.ServicePort{
-						Name:       servicePortName,
-						Port:       int32(port),
-						TargetPort: intstr.FromInt(port),
-						Protocol:   corev1.ProtocolTCP,
+						Name:        servicePortName,
+						Port:        int32(port),
+						TargetPort:  intstr.FromInt(port),
+						Protocol:    corev1.ProtocolTCP,
+						AppProtocol: appProtocol,
 					}
 					Expect(svc.Spec.Ports).To(ContainElement(expectedPort))
 				},
-				Entry("MQTT", "rabbitmq_mqtt", "mqtt", 1883),
-				Entry("MQTT-over-WebSockets", "rabbitmq_web_mqtt", "web-mqtt", 15675),
-				Entry("STOMP", "rabbitmq_stomp", "stomp", 61613),
-				Entry("STOMP-over-WebSockets", "rabbitmq_web_stomp", "web-stomp", 15674),
-				Entry("Stream", "rabbitmq_stream", "stream", 5552),
-				Entry("OSR", "rabbitmq_multi_dc_replication", "stream", 5552),
+				Entry("MQTT", "rabbitmq_mqtt", "mqtt", 1883, pointer.String("mqtt")),
+				Entry("MQTT-over-WebSockets", "rabbitmq_web_mqtt", "web-mqtt", 15675, pointer.String("http")),
+				Entry("STOMP", "rabbitmq_stomp", "stomp", 61613, pointer.String("stomp.github.io/stomp")),
+				Entry("STOMP-over-WebSockets", "rabbitmq_web_stomp", "web-stomp", 15674, pointer.String("http")),
+				Entry("Stream", "rabbitmq_stream", "stream", 5552, pointer.String("rabbitmq.com/stream")),
+				Entry("OSR", "rabbitmq_multi_dc_replication", "stream", 5552, pointer.String("rabbitmq.com/stream")),
 			)
 
 			It("updates the service type from ClusterIP to NodePort", func() {
@@ -499,18 +504,20 @@ var _ = Context("Services", func() {
 				svc.Spec.Type = corev1.ServiceTypeLoadBalancer
 				svc.Spec.Ports = []corev1.ServicePort{
 					{
-						Protocol:   corev1.ProtocolTCP,
-						Port:       5672,
-						TargetPort: intstr.FromInt(5672),
-						Name:       "amqp",
-						NodePort:   12345,
+						Protocol:    corev1.ProtocolTCP,
+						Port:        5672,
+						TargetPort:  intstr.FromInt(5672),
+						Name:        "amqp",
+						NodePort:    12345,
+						AppProtocol: pointer.String("amqp"),
 					},
 					{
-						Protocol:   corev1.ProtocolTCP,
-						Port:       15672,
-						Name:       "management",
-						TargetPort: intstr.FromInt(15672),
-						NodePort:   1234,
+						Protocol:    corev1.ProtocolTCP,
+						Port:        15672,
+						Name:        "management",
+						TargetPort:  intstr.FromInt(15672),
+						NodePort:    1234,
+						AppProtocol: nil, // explicitly leaving this nill to test that Update sets the correct value
 					},
 				}
 
@@ -519,78 +526,88 @@ var _ = Context("Services", func() {
 				Expect(err).NotTo(HaveOccurred())
 
 				expectedAmqpServicePort := corev1.ServicePort{
-					Name:       "amqp",
-					Protocol:   corev1.ProtocolTCP,
-					Port:       5672,
-					TargetPort: intstr.FromInt(5672),
-					NodePort:   12345,
+					Name:        "amqp",
+					Protocol:    corev1.ProtocolTCP,
+					Port:        5672,
+					TargetPort:  intstr.FromInt(5672),
+					NodePort:    12345,
+					AppProtocol: pointer.String("amqp"),
 				}
 				expectedManagementServicePort := corev1.ServicePort{
-					Protocol:   corev1.ProtocolTCP,
-					Port:       15672,
-					Name:       "management",
-					TargetPort: intstr.FromInt(15672),
-					NodePort:   1234,
+					Protocol:    corev1.ProtocolTCP,
+					Port:        15672,
+					Name:        "management",
+					TargetPort:  intstr.FromInt(15672),
+					NodePort:    1234,
+					AppProtocol: pointer.String("http"),
 				}
 
 				Expect(svc.Spec.Ports).To(ContainElement(expectedAmqpServicePort))
 				Expect(svc.Spec.Ports).To(ContainElement(expectedManagementServicePort))
 			})
 
-			It("unsets nodePort after updating from NodePort to ClusterIP", func() {
-				svc.Spec.Type = corev1.ServiceTypeNodePort
-				svc.Spec.Ports = []corev1.ServicePort{
-					{
-						Protocol:   corev1.ProtocolTCP,
-						Port:       5672,
-						TargetPort: intstr.FromInt(5672),
-						Name:       "amqp",
-						NodePort:   12345,
-					},
-				}
+			When("service type is updated from NodePort to ClusterIP", func() {
+				It("unsets nodePort field", func() {
+					svc.Spec.Type = corev1.ServiceTypeNodePort
+					svc.Spec.Ports = []corev1.ServicePort{
+						{
+							Protocol:   corev1.ProtocolTCP,
+							Port:       5672,
+							TargetPort: intstr.FromInt(5672),
+							Name:       "amqp",
+							NodePort:   12345,
+						},
+					}
 
-				serviceBuilder.Instance.Spec.Service.Type = "ClusterIP"
-				err := serviceBuilder.Update(svc)
-				Expect(err).NotTo(HaveOccurred())
+					serviceBuilder.Instance.Spec.Service.Type = "ClusterIP"
+					err := serviceBuilder.Update(svc)
+					Expect(err).NotTo(HaveOccurred())
 
-				// We cant set nodePort to nil because its a primitive
-				// For Kubernetes API, setting it to 0 is the same as not setting it at all
-				expectedServicePort := corev1.ServicePort{
-					Name:       "amqp",
-					Protocol:   corev1.ProtocolTCP,
-					Port:       5672,
-					TargetPort: intstr.FromInt(5672),
-					NodePort:   0,
-				}
+					// We cant set nodePort to nil because its a primitive
+					// For Kubernetes API, setting it to 0 is the same as not setting it at all
+					expectedServicePort := corev1.ServicePort{
+						Name:        "amqp",
+						Protocol:    corev1.ProtocolTCP,
+						Port:        5672,
+						TargetPort:  intstr.FromInt(5672),
+						NodePort:    0,
+						AppProtocol: pointer.String("amqp"),
+					}
 
-				Expect(svc.Spec.Ports).To(ContainElement(expectedServicePort))
+					Expect(svc.Spec.Ports).To(ContainElement(expectedServicePort))
+					Expect(svc.Spec.Type).To(Equal(corev1.ServiceTypeClusterIP))
+				})
 			})
 
-			It("unsets the service type and node ports when service type is deleted from CR spec", func() {
-				svc.Spec.Type = corev1.ServiceTypeNodePort
-				svc.Spec.Ports = []corev1.ServicePort{
-					{
-						Protocol:   corev1.ProtocolTCP,
-						Port:       5672,
-						TargetPort: intstr.FromInt(5672),
-						Name:       "amqp",
-						NodePort:   12345,
-					},
-				}
+			When("service type is deleted from the spec", func() {
+				It("unsets the service type and node ports", func() {
+					svc.Spec.Type = corev1.ServiceTypeNodePort
+					svc.Spec.Ports = []corev1.ServicePort{
+						{
+							Protocol:   corev1.ProtocolTCP,
+							Port:       5672,
+							TargetPort: intstr.FromInt(5672),
+							Name:       "amqp",
+							NodePort:   12345,
+						},
+					}
 
-				serviceBuilder.Instance.Spec.Service.Type = ""
-				err := serviceBuilder.Update(svc)
-				Expect(err).NotTo(HaveOccurred())
+					serviceBuilder.Instance.Spec.Service.Type = ""
+					err := serviceBuilder.Update(svc)
+					Expect(err).NotTo(HaveOccurred())
 
-				expectedServicePort := corev1.ServicePort{
-					Name:       "amqp",
-					Protocol:   corev1.ProtocolTCP,
-					Port:       5672,
-					TargetPort: intstr.FromInt(5672),
-					NodePort:   0,
-				}
+					expectedServicePort := corev1.ServicePort{
+						Name:        "amqp",
+						Protocol:    corev1.ProtocolTCP,
+						Port:        5672,
+						TargetPort:  intstr.FromInt(5672),
+						NodePort:    0,
+						AppProtocol: pointer.String("amqp"),
+					}
 
-				Expect(svc.Spec.Ports).To(ContainElement(expectedServicePort))
+					Expect(svc.Spec.Ports).To(ContainElement(expectedServicePort))
+					Expect(svc.Spec.Type).To(BeEmpty())
+				})
 			})
 		})
 
@@ -642,10 +659,11 @@ var _ = Context("Services", func() {
 					Spec: &corev1.ServiceSpec{
 						Ports: []corev1.ServicePort{
 							{
-								Protocol:   corev1.ProtocolUDP,
-								Port:       12345,
-								TargetPort: intstr.FromInt(12345),
-								Name:       "my-new-port",
+								Protocol:    corev1.ProtocolUDP,
+								Port:        12345,
+								TargetPort:  intstr.FromInt(12345),
+								Name:        "my-new-port",
+								AppProtocol: pointer.String("my.company.com/protocol"),
 							},
 						},
 						Selector: map[string]string{
@@ -672,28 +690,32 @@ var _ = Context("Services", func() {
 				Expect(err).NotTo(HaveOccurred())
 				Expect(svc.Spec.Ports).To(ConsistOf(
 					corev1.ServicePort{
-						Name:       "amqp",
-						Port:       5672,
-						TargetPort: intstr.FromInt(5672),
-						Protocol:   corev1.ProtocolTCP,
+						Name:        "amqp",
+						Port:        5672,
+						TargetPort:  intstr.FromInt(5672),
+						Protocol:    corev1.ProtocolTCP,
+						AppProtocol: pointer.String("amqp"),
 					},
 					corev1.ServicePort{
-						Name:       "management",
-						Port:       15672,
-						TargetPort: intstr.FromInt(15672),
-						Protocol:   corev1.ProtocolTCP,
+						Name:        "management",
+						Port:        15672,
+						TargetPort:  intstr.FromInt(15672),
+						Protocol:    corev1.ProtocolTCP,
+						AppProtocol: pointer.String("http"),
 					},
 					corev1.ServicePort{
-						Name:       "prometheus",
-						Port:       15692,
-						TargetPort: intstr.FromInt(15692),
-						Protocol:   corev1.ProtocolTCP,
+						Name:        "prometheus",
+						Port:        15692,
+						TargetPort:  intstr.FromInt(15692),
+						Protocol:    corev1.ProtocolTCP,
+						AppProtocol: pointer.String("prometheus.io/metrics"),
 					},
 					corev1.ServicePort{
-						Protocol:   corev1.ProtocolUDP,
-						Port:       12345,
-						TargetPort: intstr.FromInt(12345),
-						Name:       "my-new-port",
+						Protocol:    corev1.ProtocolUDP,
+						Port:        12345,
+						TargetPort:  intstr.FromInt(12345),
+						Name:        "my-new-port",
+						AppProtocol: pointer.String("my.company.com/protocol"),
 					},
 				))
 				Expect(svc.Spec.Selector).To(Equal(map[string]string{"a-selector": "a-label", "app.kubernetes.io/name": "foo"}))
