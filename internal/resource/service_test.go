@@ -94,29 +94,33 @@ var _ = Context("Services", func() {
 				Expect(serviceBuilder.Update(svc)).To(Succeed())
 				Expect(svc.Spec.Ports).To(ContainElements([]corev1.ServicePort{
 					{
-						Name:       "amqps",
-						Protocol:   corev1.ProtocolTCP,
-						Port:       5671,
-						TargetPort: intstr.FromInt(5671),
+						Name:        "amqps",
+						Protocol:    corev1.ProtocolTCP,
+						Port:        5671,
+						TargetPort:  intstr.FromInt(5671),
+						AppProtocol: pointer.String("amqps"),
 					},
 					{
-						Name:       "management-tls",
-						Protocol:   corev1.ProtocolTCP,
-						Port:       15671,
-						TargetPort: intstr.FromInt(15671),
+						Name:        "management-tls",
+						Protocol:    corev1.ProtocolTCP,
+						Port:        15671,
+						TargetPort:  intstr.FromInt(15671),
+						AppProtocol: pointer.String("https"),
 					},
 					{
-						Name:       "prometheus-tls",
-						Protocol:   corev1.ProtocolTCP,
-						Port:       15691,
-						TargetPort: intstr.FromInt(15691),
+						Name:        "prometheus-tls",
+						Protocol:    corev1.ProtocolTCP,
+						Port:        15691,
+						TargetPort:  intstr.FromInt(15691),
+						AppProtocol: pointer.String("prometheus.io/metric-tls"),
 					},
 				}))
 				Expect(svc.Spec.Ports).ToNot(ContainElement(corev1.ServicePort{
-					Name:       "prometheus",
-					Protocol:   corev1.ProtocolTCP,
-					Port:       15692,
-					TargetPort: intstr.FromInt(15692),
+					Name:        "prometheus",
+					Protocol:    corev1.ProtocolTCP,
+					Port:        15692,
+					TargetPort:  intstr.FromInt(15692),
+					AppProtocol: pointer.String("prometheus.io/metric"),
 				},
 				))
 			})
@@ -127,22 +131,25 @@ var _ = Context("Services", func() {
 					Expect(serviceBuilder.Update(svc)).To(Succeed())
 					Expect(svc.Spec.Ports).To(ContainElements([]corev1.ServicePort{
 						{
-							Name:       "mqtts",
-							Protocol:   corev1.ProtocolTCP,
-							Port:       8883,
-							TargetPort: intstr.FromInt(8883),
+							Name:        "mqtts",
+							Protocol:    corev1.ProtocolTCP,
+							Port:        8883,
+							TargetPort:  intstr.FromInt(8883),
+							AppProtocol: pointer.String("mqtts"),
 						},
 						{
-							Name:       "stomps",
-							Protocol:   corev1.ProtocolTCP,
-							Port:       61614,
-							TargetPort: intstr.FromInt(61614),
+							Name:        "stomps",
+							Protocol:    corev1.ProtocolTCP,
+							Port:        61614,
+							TargetPort:  intstr.FromInt(61614),
+							AppProtocol: pointer.String("stomp.github.io/stomp-tls"),
 						},
 						{
-							Name:       "streams",
-							Protocol:   corev1.ProtocolTCP,
-							Port:       5551,
-							TargetPort: intstr.FromInt(5551),
+							Name:        "streams",
+							Protocol:    corev1.ProtocolTCP,
+							Port:        5551,
+							TargetPort:  intstr.FromInt(5551),
+							AppProtocol: pointer.String("rabbitmq.com/stream-tls"),
 						},
 					}))
 				})
@@ -155,16 +162,18 @@ var _ = Context("Services", func() {
 					Expect(serviceBuilder.Update(svc)).To(Succeed())
 					Expect(svc.Spec.Ports).To(ContainElements([]corev1.ServicePort{
 						{
-							Name:       "web-mqtt-tls",
-							Protocol:   corev1.ProtocolTCP,
-							Port:       15676,
-							TargetPort: intstr.FromInt(15676),
+							Name:        "web-mqtt-tls",
+							Protocol:    corev1.ProtocolTCP,
+							Port:        15676,
+							TargetPort:  intstr.FromInt(15676),
+							AppProtocol: pointer.String("https"),
 						},
 						{
-							Name:       "web-stomp-tls",
-							Protocol:   corev1.ProtocolTCP,
-							Port:       15673,
-							TargetPort: intstr.FromInt(15673),
+							Name:        "web-stomp-tls",
+							Protocol:    corev1.ProtocolTCP,
+							Port:        15673,
+							TargetPort:  intstr.FromInt(15673),
+							AppProtocol: pointer.String("https"),
 						},
 					}))
 				})
@@ -176,10 +185,11 @@ var _ = Context("Services", func() {
 					Expect(serviceBuilder.Update(svc)).To(Succeed())
 					Expect(svc.Spec.Ports).To(ContainElements([]corev1.ServicePort{
 						{
-							Name:       "streams",
-							Protocol:   corev1.ProtocolTCP,
-							Port:       5551,
-							TargetPort: intstr.FromInt(5551),
+							Name:        "streams",
+							Protocol:    corev1.ProtocolTCP,
+							Port:        5551,
+							TargetPort:  intstr.FromInt(5551),
+							AppProtocol: pointer.String("rabbitmq.com/stream-tls"),
 						},
 					}))
 				})
@@ -191,66 +201,73 @@ var _ = Context("Services", func() {
 					Expect(serviceBuilder.Update(svc)).To(Succeed())
 					Expect(svc.Spec.Ports).To(ConsistOf([]corev1.ServicePort{
 						{
-							Name:       "amqps",
-							Protocol:   corev1.ProtocolTCP,
-							Port:       5671,
-							TargetPort: intstr.FromInt(5671),
+							Name:        "amqps",
+							Protocol:    corev1.ProtocolTCP,
+							Port:        5671,
+							TargetPort:  intstr.FromInt(5671),
+							AppProtocol: pointer.String("amqps"),
 						},
 						{
-							Name:       "management-tls",
-							Protocol:   corev1.ProtocolTCP,
-							Port:       15671,
-							TargetPort: intstr.FromInt(15671),
+							Name:        "management-tls",
+							Protocol:    corev1.ProtocolTCP,
+							Port:        15671,
+							TargetPort:  intstr.FromInt(15671),
+							AppProtocol: pointer.String("https"),
 						},
 						{
-							Name:       "prometheus-tls",
-							Protocol:   corev1.ProtocolTCP,
-							Port:       15691,
-							TargetPort: intstr.FromInt(15691),
+							Name:        "prometheus-tls",
+							Protocol:    corev1.ProtocolTCP,
+							Port:        15691,
+							TargetPort:  intstr.FromInt(15691),
+							AppProtocol: pointer.String("prometheus.io/metric-tls"),
 						},
 					}))
 				})
 				DescribeTable("only exposes tls ports in the service for enabled plugins",
-					func(plugin, servicePortName string, port int) {
+					func(plugin, servicePortName string, port int, appProtocol *string) {
 						instance.Spec.Rabbitmq.AdditionalPlugins = []rabbitmqv1beta1.Plugin{rabbitmqv1beta1.Plugin(plugin)}
 						instance.Spec.TLS.DisableNonTLSListeners = true
 						instance.Spec.TLS.CaSecretName = "somecacertname"
 						Expect(serviceBuilder.Update(svc)).To(Succeed())
 						amqpsPort := corev1.ServicePort{
 
-							Name:       "amqps",
-							Protocol:   corev1.ProtocolTCP,
-							Port:       5671,
-							TargetPort: intstr.FromInt(5671),
+							Name:        "amqps",
+							Protocol:    corev1.ProtocolTCP,
+							Port:        5671,
+							TargetPort:  intstr.FromInt(5671),
+							AppProtocol: pointer.String("amqps"),
 						}
 						managementTLSPort := corev1.ServicePort{
 
-							Name:       "management-tls",
-							Protocol:   corev1.ProtocolTCP,
-							Port:       15671,
-							TargetPort: intstr.FromInt(15671),
+							Name:        "management-tls",
+							Protocol:    corev1.ProtocolTCP,
+							Port:        15671,
+							TargetPort:  intstr.FromInt(15671),
+							AppProtocol: pointer.String("https"),
 						}
 						prometheusTLSPort := corev1.ServicePort{
 
-							Name:       "prometheus-tls",
-							Protocol:   corev1.ProtocolTCP,
-							Port:       15691,
-							TargetPort: intstr.FromInt(15691),
+							Name:        "prometheus-tls",
+							Protocol:    corev1.ProtocolTCP,
+							Port:        15691,
+							TargetPort:  intstr.FromInt(15691),
+							AppProtocol: pointer.String("prometheus.io/metric-tls"),
 						}
 						expectedPort := corev1.ServicePort{
-							Name:       servicePortName,
-							Port:       int32(port),
-							TargetPort: intstr.FromInt(port),
-							Protocol:   corev1.ProtocolTCP,
+							Name:        servicePortName,
+							Port:        int32(port),
+							TargetPort:  intstr.FromInt(port),
+							Protocol:    corev1.ProtocolTCP,
+							AppProtocol: appProtocol,
 						}
 						Expect(svc.Spec.Ports).To(ConsistOf(amqpsPort, managementTLSPort, prometheusTLSPort, expectedPort))
 					},
-					Entry("MQTT", "rabbitmq_mqtt", "mqtts", 8883),
-					Entry("MQTT-over-WebSockets", "rabbitmq_web_mqtt", "web-mqtt-tls", 15676),
-					Entry("STOMP", "rabbitmq_stomp", "stomps", 61614),
-					Entry("STOMP-over-WebSockets", "rabbitmq_web_stomp", "web-stomp-tls", 15673),
-					Entry("Stream", "rabbitmq_stream", "streams", 5551),
-					Entry("OSR", "rabbitmq_multi_dc_replication", "streams", 5551),
+					Entry("MQTT", "rabbitmq_mqtt", "mqtts", 8883, pointer.String("mqtts")),
+					Entry("MQTT-over-WebSockets", "rabbitmq_web_mqtt", "web-mqtt-tls", 15676, pointer.String("https")),
+					Entry("STOMP", "rabbitmq_stomp", "stomps", 61614, pointer.String("stomp.github.io/stomp-tls")),
+					Entry("STOMP-over-WebSockets", "rabbitmq_web_stomp", "web-stomp-tls", 15673, pointer.String("https")),
+					Entry("Stream", "rabbitmq_stream", "streams", 5551, pointer.String("rabbitmq.com/stream-tls")),
+					Entry("OSR", "rabbitmq_multi_dc_replication", "streams", 5551, pointer.String("rabbitmq.com/stream-tls")),
 				)
 			})
 		})
