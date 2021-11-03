@@ -246,7 +246,7 @@ func (builder *ServiceBuilder) generateServicePortsMap() map[string]corev1.Servi
 
 	if builder.Instance.MutualTLSEnabled() {
 		if builder.Instance.AdditionalPluginEnabled("rabbitmq_web_stomp") {
-			servicePortsMap["stomps"] = corev1.ServicePort{
+			servicePortsMap["web-stomp-tls"] = corev1.ServicePort{
 				Protocol:    corev1.ProtocolTCP,
 				Port:        15673,
 				Name:        "web-stomp-tls",
@@ -255,7 +255,7 @@ func (builder *ServiceBuilder) generateServicePortsMap() map[string]corev1.Servi
 			}
 		}
 		if builder.Instance.AdditionalPluginEnabled("rabbitmq_web_mqtt") {
-			servicePortsMap["mqtts"] = corev1.ServicePort{
+			servicePortsMap["web-mqtt-tls"] = corev1.ServicePort{
 				Protocol:    corev1.ProtocolTCP,
 				Port:        15676,
 				Name:        "web-mqtt-tls",
